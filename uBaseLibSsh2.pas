@@ -345,53 +345,6 @@ begin
   Result := ConnectAndAuth(ASocket, AnsiString(AUsername), AnsiString(APassword))
 end;
 
-const
-  LIBEAY_DLL = 'libeay32.dll';
-  OPENSSL_CRYPTO_LOCK = 1;
-
-var
-  glock_cs: array of THandle;
-
-function CRYPTO_num_locks: Integer; cdecl; external LIBEAY_DLL;
-procedure CRYPTO_set_locking_callback(cb: Pointer); cdecl; external LIBEAY_DLL;
-
-procedure win32_locking_callback(mode: Integer; atype: integer; afile: PAnsiChar; line: Integer); cdecl;
-begin
-  if ((mode and OPENSSL_CRYPTO_LOCK) <> 0) then
-  begin
-    WaitForSingleObject(glock_cs[atype], INFINITE);
-  end
-  else
-  begin
-    ReleaseMutex(glock_cs[atype]);
-  end
-end;
-
-
-procedure InitOpenSslThreads_;
-var l,j: Integer;
-begin
-  l := CRYPTO_num_locks();
-  SetLength(glock_cs, l);
-
-  for j := 0 to l - 1 do
-  begin
-    glock_cs[j] := CreateMutex(nil, False, nil);
-  end;
-
-  CRYPTO_set_locking_callback(@win32_locking_callback);
-end;
-
-procedure FinalOpenSslThreads_;
-var j: Integer;
-begin
-  for j := 0 to Length(glock_cs) - 1 do
-  begin
-    CloseHandle(glock_cs[j]);
-    glock_cs[j] := 0;
-  end;
-end;
-
 procedure LibSshInit_;
 var
   r: Integer;
@@ -409,11 +362,9 @@ begin
 end;
 
 initialization
-  InitOpenSslThreads_();
   LibSshInit_();
 
 finalization
   libssh2_exit();
-  FinalOpenSslThreads_();
 
 end.
