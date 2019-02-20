@@ -682,9 +682,6 @@ function libssh2_session_flag(session: PLIBSSH2_SESSION;
                               flag: Integer;
                               value: Integer): Integer; cdecl  ;
 
-function libssh2_session_get_timeout(session: PLIBSSH2_SESSION): LONG; cdecl  ;
-
-procedure libssh2_session_set_timeout(session: PLIBSSH2_SESSION; timeout: long); cdecl  ;
 
 
 {+// Userauth API*/ }
@@ -906,10 +903,10 @@ function libssh2_session_get_blocking(session: PLIBSSH2_SESSION): Integer; cdecl
 procedure libssh2_channel_set_blocking(channel: PLIBSSH2_CHANNEL;
                                        blocking: Integer); cdecl  ;
 
-procedure libssh2_session_set_timeout(session: PLIBSSH2_SESSION;
-                                      timeout: LongInt); cdecl;
+function libssh2_session_get_timeout(session: PLIBSSH2_SESSION): LONG; cdecl;
 
-function libssh2_session_get_timeout(session: PLIBSSH2_SESSION): LongInt; cdecl;
+procedure libssh2_session_set_timeout(session: PLIBSSH2_SESSION;
+                                      timeout: long); cdecl;
 
 
 {+// libssh2_channel_handle_extended_data is DEPRECATED, do not use!*/ }
@@ -973,6 +970,39 @@ type
    st_ctime: Int64;
  end;
 
+(*
+ struct _stat64 {
+        _dev_t     st_dev;
+        _ino_t     st_ino;
+        unsigned short st_mode;
+        short      st_nlink;
+        short      st_uid;
+        short      st_gid;
+        _dev_t     st_rdev;
+        __int64    st_size;
+        __time64_t st_atime;
+        __time64_t st_mtime;
+        __time64_t st_ctime;
+        };
+*)
+type
+  libssh2_struct_stat = record
+    st_dev: UINT;
+    st_ino: Word;
+    st_mode: Word;
+    st_nlink: Short;
+    st_uid: Short;
+    st_gid: Short;
+    st_rdev: UINT;
+    st_size: Int64;
+    st_atime: Int64;
+    st_mtime: Int64;
+    st_ctime: Int64;
+  end;
+//  PLibssh2StructStat = ^TLibssh2StructStat;
+//  TLibssh2StructStat = libssh2_struct_stat;
+
+
 {/* libssh2_scp_recv is DEPRECATED, do not use! */}
 function libssh2_scp_recv(session: PLIBSSH2_SESSION;
                           const path: PAnsiChar;
@@ -981,7 +1011,7 @@ function libssh2_scp_recv(session: PLIBSSH2_SESSION;
 {/* Use libssh2_scp_recv2 for large (> 2GB) file support on windows */}
 function libssh2_scp_recv2(session: PLIBSSH2_SESSION;
                            const path: PAnsiChar;
-                           sb: Pointer): PLIBSSH2_CHANNEL; cdecl; // libssh2_struct_stat *
+                           var sb: libssh2_struct_stat): PLIBSSH2_CHANNEL; cdecl; // libssh2_struct_stat *
 
 
 function libssh2_scp_send_ex(session: PLIBSSH2_SESSION;
@@ -1403,6 +1433,8 @@ implementation
 
 function libssh2_init; external libssh2_name;
 procedure libssh2_exit; external libssh2_name;
+procedure libssh2_free; external libssh2_name;
+function libssh2_session_supported_algs; external libssh2_name;
 function libssh2_session_init_ex; external libssh2_name;
 function libssh2_session_handshake; external libssh2_name;
 function libssh2_session_abstract; external libssh2_name;
@@ -1461,6 +1493,7 @@ function libssh2_channel_close; external libssh2_name;
 function libssh2_channel_wait_closed; external libssh2_name;
 function libssh2_channel_free; external libssh2_name;
 function libssh2_scp_recv; external libssh2_name;
+function libssh2_scp_recv2; external libssh2_name;
 function libssh2_scp_send_ex; external libssh2_name;
 function libssh2_scp_send64; external libssh2_name;
 function libssh2_base64_decode; external libssh2_name;
