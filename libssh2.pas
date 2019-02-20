@@ -73,16 +73,16 @@ type
 {-banner. Release versions have no appended strings and may of course not }
 {=have dashes either. }
 const
-  _LIBSSH2_VERSION = '1.2.6';
+  _LIBSSH2_VERSION = '1.8.1_DEV';
 
 {+// The numeric version number is also available "in parts" by using these }
 {=defines: }
 const
   LIBSSH2_VERSION_MAJOR = 1;
 const
-  LIBSSH2_VERSION_MINOR = 2;
+  LIBSSH2_VERSION_MINOR = 8;
 const
-  LIBSSH2_VERSION_PATCH = 6;
+  LIBSSH2_VERSION_PATCH = 1;
 
 const
   SHA_DIGEST_LENGTH = 20;
@@ -105,7 +105,7 @@ const
 {-comparisons with greater than and less than work. }
 {= }
 const
-  LIBSSH2_VERSION_NUM = $010206;
+  LIBSSH2_VERSION_NUM = $010801;
 
 {+// }
 {-* This is the date and time when the full source package was created. The }
@@ -117,11 +117,11 @@ const
 {-* "Mon Feb 12 11:35:33 UTC 2007" }
 {= }
 const
-  LIBSSH2_TIMESTAMP = 'Thu Jun 10 08:19:51 UTC 2010';
+  LIBSSH2_TIMESTAMP = 'DEV';
 
 {+// Part of every banner, user specified or not*/ }
 const
-  LIBSSH2_SSH_BANNER = 'SSH-2.0-libssh2_'  + _LIBSSH2_VERSION;
+  LIBSSH2_SSH_BANNER = 'SSH-2.0-libssh2_' + _LIBSSH2_VERSION;
 
 {+// We*could* add a comment here if we so chose*/ }
 const
@@ -169,8 +169,12 @@ const
 const
   LIBSSH2_PACKET_MAXPAYLOAD = 40000;
 
-{+// Malloc callbacks*/ }
-// ovo je vec definisano u ssh2_priv alloc, realloc, free
+{/* Malloc callbacks */}
+type
+	LIBSSH2_ALLOC_FUNC = function(count: UINT; abstract: PPointer): Pointer; cdecl;
+	LIBSSH2_REALLOC_FUNC = function(ptr: Pointer; count: UINT; abstract: PPointer): Pointer; cdecl;
+	LIBSSH2_FREE_FUNC = procedure(ptr: Pointer; abstract: PPointer); cdecl;
+
 
 type
   _LIBSSH2_SESSION = record
@@ -273,6 +277,18 @@ type
                var session_abstract: Pointer;
                channel: PLIBSSH2_CHANNEL;
                var channel_abstract: Pointer); cdecl  ;
+							 
+
+{/* I/O callbacks */}
+type
+	LIBSSH2_RECV_FUNC = function (socket: libssh2_socket_t; 
+                                buffer: Pointer; length: size_t;
+                                flags: Integer; abstract: PPointer): ssize_t; cdecl;
+type																
+	LIBSSH2_SEND_FUNC = function (socket: libssh2_socket_t;
+                                const buffer: Pointer; length: size_t;
+                                flags: Integer; abstract: PPointer): ssize_t; cdecl;
+
 
 {+// libssh2_session_callback_set() constants*/ }
 const
@@ -285,6 +301,10 @@ const
   LIBSSH2_CALLBACK_MACERROR = 3;
 const
   LIBSSH2_CALLBACK_X11 = 4;
+const
+	LIBSSH2_CALLBACK_SEND = 5;
+const
+	LIBSSH2_CALLBACK_RECV = 6;
 
 {+// libssh2_session_method_pref() constants*/ }
 const
@@ -384,6 +404,8 @@ const
   LIBSSH2_HOSTKEY_HASH_MD5 = 1;
 const
   LIBSSH2_HOSTKEY_HASH_SHA1 = 2;
+const
+	LIBSSH2_HOSTKEY_HASH_SHA256 = 3;
 
 {+// Hostkey Types */ }
 const
@@ -392,6 +414,14 @@ const
   LIBSSH2_HOSTKEY_TYPE_RSA = 1;
 const
   LIBSSH2_HOSTKEY_TYPE_DSS = 2;
+const
+	LIBSSH2_HOSTKEY_TYPE_ECDSA_256 = 3;
+const
+	LIBSSH2_HOSTKEY_TYPE_ECDSA_384 = 4;
+const
+	LIBSSH2_HOSTKEY_TYPE_ECDSA_521 = 5;
+const
+	LIBSSH2_HOSTKEY_TYPE_ED25519 = 6;
 
 {+// Disconnect Codes (defined by SSH protocol)*/ }
 const
@@ -431,7 +461,7 @@ const
 const
   LIBSSH2_ERROR_SOCKET_NONE = -1;
 const
-  LIBSSH2_ERROR_BANNER_NONE = -2;
+  LIBSSH2_ERROR_BANNER_RECV = -2;
 const
   LIBSSH2_ERROR_BANNER_SEND = -3;
 const
@@ -514,6 +544,23 @@ const
   LIBSSH2_ERROR_OUT_OF_BOUNDARY = -41;
 const
   LIBSSH2_ERROR_AGENT_PROTOCOL = -42;
+const 
+	LIBSSH2_ERROR_SOCKET_RECV          = -43;
+const 
+	LIBSSH2_ERROR_ENCRYPT              = -44;
+const 
+	LIBSSH2_ERROR_BAD_SOCKET           = -45;
+const 
+	LIBSSH2_ERROR_KNOWN_HOSTS          = -46;
+const 
+	LIBSSH2_ERROR_CHANNEL_WINDOW_FULL  = -47;
+const
+	LIBSSH2_ERROR_KEYFILE_AUTH_FAILED  = -48;
+
+{/* this is a define to provide the old (<= 1.2.7) name */}
+const
+	LIBSSH2_ERROR_BANNER_NONE = LIBSSH2_ERROR_BANNER_RECV;
+
 
 {+// Global API*/}
 const
@@ -540,12 +587,29 @@ function libssh2_init(flags: Integer): Integer; cdecl;
  * Exit the libssh2 functions and free's all memory used internal.
  */}
 procedure libssh2_exit; cdecl;
+	
 
-type
-// abstract je void**, tako da pazite!!!!
-LIBSSH2_ALLOC_FUNC = function(count: UINT; abstract: Pointer): Pointer; cdecl;
-LIBSSH2_REALLOC_FUNC = function(ptr: Pointer; count: UINT; abstract: Pointer): Pointer; cdecl;
-LIBSSH2_FREE_FUNC = procedure(ptr: Pointer; abstract: Pointer); cdecl;
+{/*
+ * libssh2_free()
+ *
+ * Deallocate memory allocated by earlier call to libssh2 functions.
+ */}
+procedure libssh2_free(session: PLIBSSH2_SESSION; ptr: Pointer); cdecl;
+
+{/*
+ * libssh2_session_supported_algs()
+ *
+ * Fills algs with a list of supported acryptographic algorithms. Returns a
+ * non-negative number (number of supported algorithms) on success or a
+ * negative number (an eror code) on failure.
+ *
+ * NOTE: on success, algs must be deallocated (by calling libssh2_free) when
+ * not needed anymore
+ */}
+function libssh2_session_supported_algs(session: PLIBSSH2_SESSION;
+                                        method_type: Integer;
+                                        var algs: PPAnsiChar): Integer; cdecl;
+
 
 {+// Session API*/ }
 
@@ -685,7 +749,7 @@ function libssh2_poll(var fds: LIBSSH2_POLLFD;
 
 {+// Channel API*/ }
 const
-  LIBSSH2_CHANNEL_WINDOW_DEFAULT = 65536;
+  LIBSSH2_CHANNEL_WINDOW_DEFAULT = (2*1024*1024);
 const
   LIBSSH2_CHANNEL_PACKET_DEFAULT = 32768;
 const
@@ -834,13 +898,19 @@ function libssh2_channel_window_write_ex(channel: PLIBSSH2_CHANNEL;
 function libssh2_channel_window_write(channel: PLIBSSH2_CHANNEL): ULong; inline;
 
 procedure libssh2_session_set_blocking(session: PLIBSSH2_SESSION;
-                                      blocking: Integer); cdecl  ;
+                                       blocking: Integer); cdecl  ;
 
 function libssh2_session_get_blocking(session: PLIBSSH2_SESSION): Integer; cdecl  ;
 
 
 procedure libssh2_channel_set_blocking(channel: PLIBSSH2_CHANNEL;
-                                      blocking: Integer); cdecl  ;
+                                       blocking: Integer); cdecl  ;
+
+procedure libssh2_session_set_timeout(session: PLIBSSH2_SESSION;
+                                      timeout: LongInt); cdecl;
+
+function libssh2_session_get_timeout(session: PLIBSSH2_SESSION): LongInt; cdecl;
+
 
 {+// libssh2_channel_handle_extended_data is DEPRECATED, do not use!*/ }
 
@@ -903,9 +973,16 @@ type
    st_ctime: Int64;
  end;
 
+{/* libssh2_scp_recv is DEPRECATED, do not use! */}
 function libssh2_scp_recv(session: PLIBSSH2_SESSION;
-                          const path: PAnsiChar; 
-                          var sb: struct_stat): PLIBSSH2_CHANNEL; cdecl  ;
+                          const path: PAnsiChar;
+                          var sb: struct_stat): PLIBSSH2_CHANNEL; cdecl; deprecated;
+
+{/* Use libssh2_scp_recv2 for large (> 2GB) file support on windows */}
+function libssh2_scp_recv2(session: PLIBSSH2_SESSION;
+                           const path: PAnsiChar;
+                           sb: Pointer): PLIBSSH2_CHANNEL; cdecl; // libssh2_struct_stat *
+
 
 function libssh2_scp_send_ex(session: PLIBSSH2_SESSION;
                              const path: PAnsiChar;
@@ -985,12 +1062,17 @@ const LIBSSH2_KNOWNHOST_KEYENC_MASK = (3 shl 16);
 const LIBSSH2_KNOWNHOST_KEYENC_RAW = (1 shl 16);
 const LIBSSH2_KNOWNHOST_KEYENC_BASE64 = (2 shl 16);
 
-{/* type of key (2 bits) */}
-const LIBSSH2_KNOWNHOST_KEY_MASK = (3 shl 18);
-const LIBSSH2_KNOWNHOST_KEY_SHIFT = 18;
-const LIBSSH2_KNOWNHOST_KEY_RSA1 = (1 shl 18);
-const LIBSSH2_KNOWNHOST_KEY_SSHRSA = (2 shl 18);
-const LIBSSH2_KNOWNHOST_KEY_SSHDSS = (3 shl 18);
+{/* type of key (3 bits) */}
+const LIBSSH2_KNOWNHOST_KEY_MASK      = (15 shl 18);
+const LIBSSH2_KNOWNHOST_KEY_SHIFT     = 18;
+const LIBSSH2_KNOWNHOST_KEY_RSA1      = (1 shl 18);
+const LIBSSH2_KNOWNHOST_KEY_SSHRSA    = (2 shl 18);
+const LIBSSH2_KNOWNHOST_KEY_SSHDSS    = (3 shl 18);
+const LIBSSH2_KNOWNHOST_KEY_ECDSA_256 = (4 shl 18);
+const LIBSSH2_KNOWNHOST_KEY_ECDSA_384 = (5 shl 18);
+const LIBSSH2_KNOWNHOST_KEY_ECDSA_521 = (6 shl 18);
+const LIBSSH2_KNOWNHOST_KEY_ED25519   = (7 shl 18);
+const LIBSSH2_KNOWNHOST_KEY_UNKNOWN   = (15 shl 18);
 
 function libssh2_knownhost_add(hosts: PLIBSSH2_KNOWNHOSTS;
                       host,
