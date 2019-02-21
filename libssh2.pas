@@ -171,9 +171,9 @@ const
 
 {/* Malloc callbacks */}
 type
-	LIBSSH2_ALLOC_FUNC = function(count: UINT; abstract: PPointer): Pointer; cdecl;
-	LIBSSH2_REALLOC_FUNC = function(ptr: Pointer; count: UINT; abstract: PPointer): Pointer; cdecl;
-	LIBSSH2_FREE_FUNC = procedure(ptr: Pointer; abstract: PPointer); cdecl;
+	LIBSSH2_ALLOC_FUNC = function(count: uint; _abstract: PPointer): Pointer; cdecl;
+	LIBSSH2_REALLOC_FUNC = function(ptr: Pointer; count: uint; _abstract: PPointer): Pointer; cdecl;
+	LIBSSH2_FREE_FUNC = procedure(ptr: Pointer; _abstract: PPointer); cdecl;
 
 
 type
@@ -222,7 +222,7 @@ type
 type 
  LIBSSH2_USERAUTH_PUBLICKEY_SIGN_FUNC = function(
   session: PLIBSSH2_SESSION; var sig: PByte; sig_len: size_t;
-           const data: PByte; data_len: size_t; abstract: Pointer): Integer; cdecl;
+           const data: PByte; data_len: size_t; _abstract: Pointer): Integer; cdecl;
 
 {+// 'keyboard-interactive' authentication callback*/ }
 type
@@ -233,13 +233,13 @@ type
                 num_prompts: Integer;
                 const prompts: PLIBSSH2_USERAUTH_KBDINT_PROMPT;
                 var responses: LIBSSH2_USERAUTH_KBDINT_RESPONSE;
-                abstract: Pointer); cdecl;
+                _abstract: Pointer); cdecl;
 {+// Callbacks for special SSH packets*/ }
 type
   LIBSSH2_IGNORE_FUNC = procedure (session: PLIBSSH2_SESSION;
                const message: PAnsiChar;
                message_len: Integer;
-               abstract: Pointer); cdecl  ;
+               _abstract: Pointer); cdecl  ;
 type
   LIBSSH2_DEBUG_FUNC = procedure (session: PLIBSSH2_SESSION;
                always_display: Integer; 
@@ -247,7 +247,7 @@ type
                message_len: Integer;
                const language: PAnsiChar;
                language_len: Integer;
-               abstract: Pointer); cdecl  ;
+               _abstract: Pointer); cdecl  ;
 type
   LIBSSH2_DISCONNECT_FUNC = procedure(session: PLIBSSH2_SESSION;
                reason: Integer;
@@ -255,23 +255,23 @@ type
                message_len: Integer;
                const language: PAnsiChar;
                language_len: Integer;
-               abstract: Pointer); cdecl  ;
+               _abstract: Pointer); cdecl  ;
 type
   LIBSSH2_PASSWD_CHANGEREQ_FUNC =  procedure(session: PLIBSSH2_SESSION;
                var newpw: PAnsiChar;
                var newpw_len: Integer;
-               abstract: Pointer); cdecl  ;
+               _abstract: Pointer); cdecl  ;
 type
   LIBSSH2_MACERROR_FUNC = function (session: PLIBSSH2_SESSION;
               const packet: PAnsiChar; 
               packet_len: Integer; 
-              abstract: Pointer): Integer; cdecl  ;
+              _abstract: Pointer): Integer; cdecl  ;
 type
   LIBSSH2_X11_OPEN_FUNC = procedure (session: PLIBSSH2_SESSION;
                channel: PLIBSSH2_CHANNEL;
                const shost: PAnsiChar;
                sport: Integer;
-               abstract: Pointer); cdecl  ;
+               _abstract: Pointer); cdecl  ;
 type
   LIBSSH2_CHANNEL_CLOSE_FUNC = procedure (session: PLIBSSH2_SESSION;
                var session_abstract: Pointer;
@@ -283,11 +283,11 @@ type
 type
 	LIBSSH2_RECV_FUNC = function (socket: libssh2_socket_t; 
                                 buffer: Pointer; length: size_t;
-                                flags: Integer; abstract: PPointer): ssize_t; cdecl;
+                                flags: Integer; _abstract: PPointer): ssize_t; cdecl;
 type																
 	LIBSSH2_SEND_FUNC = function (socket: libssh2_socket_t;
                                 const buffer: Pointer; length: size_t;
-                                flags: Integer; abstract: PPointer): ssize_t; cdecl;
+                                flags: Integer; _abstract: PPointer): ssize_t; cdecl;
 
 
 {+// libssh2_session_callback_set() constants*/ }
@@ -616,7 +616,7 @@ function libssh2_session_supported_algs(session: PLIBSSH2_SESSION;
 function libssh2_session_init_ex(my_alloc: LIBSSH2_ALLOC_FUNC;
                                  my_free: LIBSSH2_FREE_FUNC;
                                  my_realloc: LIBSSH2_REALLOC_FUNC;
-                                 abstract: Pointer): PLIBSSH2_SESSION; cdecl;
+                                 _abstract: Pointer): PLIBSSH2_SESSION; cdecl;
 
 
 function libssh2_session_handshake(session: PLIBSSH2_SESSION;

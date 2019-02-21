@@ -3,7 +3,7 @@ unit uBaseLibSsh2;
 interface
 
 uses
-  SysUtils, Classes, AnsiStrings,
+  SysUtils, Classes, AnsiStrings, SyncObjs,
   //
   Winapi.Winsock2,
   //
@@ -32,6 +32,9 @@ type
     FRaiseError: Boolean;
     FSocket: TSocket;
     FSession: PLIBSSH2_SESSION;
+    FHostKey: AnsiString;
+    FHostKeyType: Integer;
+    FHostKeyTypeStr: string;
     FFingerprint: AnsiString;
     FRemoteBanner: AnsiString;
     FAuthTypeSet: TSshAuthTypeSet;
@@ -40,11 +43,19 @@ type
     function GetLibVer: AnsiString;
     function DoHandshake: Boolean;
     function GetHostkeyHash: AnsiString;
+    function GetSessionHostkey: Integer;
     function GetRemoteBanner: AnsiString;
     function GetUserAuthList(const AUsername: AnsiString): TSshAuthTypeSet;
     procedure RaiseSshError_(const A: string);
     procedure RaiseSshError(const A: AnsiString);
     procedure DoOnFingerprint;
+    //---
+    function ConnectAndAuth(const ASocket: TSocket;
+      const AUsername, APassword: AnsiString): Boolean;{$IFDEF UNICODE}overload;{$ENDIF}
+    {$IFDEF UNICODE}
+    function ConnectAndAuth(const ASocket: TSocket;
+      const AUsername, APassword: string): Boolean; overload;
+    {$ENDIF}
   public
     constructor Create;
     destructor Destroy; override;
@@ -55,20 +66,18 @@ type
 //    function GetSessionLastError: AnsiString;
     function AuthPasswordSupport(const AUser: AnsiString): Boolean; overload;
     function AuthPasswordSupport(const AUser: string): Boolean; overload;
-    function Auth(const AUsername, APassword: AnsiString): Boolean; overload;
-    function Auth(const AUsername, APassword: string): Boolean; overload;
+    function Auth(const AUsername, APassword: AnsiString; ATerminatedEvent: TEvent): Boolean; overload;
+    function Auth(const AUsername, APassword: string; ATerminatedEvent: TEvent): Boolean; overload;
+    function AuthKeyboardIntecactive(const AUsername, APassword: AnsiString; ATerminatedEvent: TEvent): Boolean;
     function Connect(const ASocket: TSocket): Boolean;
-    function ConnectAndAuth(const ASocket: TSocket;
-      const AUsername, APassword: AnsiString): Boolean;{$IFDEF UNICODE}overload;{$ENDIF}
-    {$IFDEF UNICODE}
-    function ConnectAndAuth(const ASocket: TSocket;
-      const AUsername, APassword: string): Boolean; overload;
-    {$ENDIF}
     function WaitSocket: Boolean;
 
     property Socket: TSocket read FSocket write FSocket;
     property LibVersion: AnsiString read GetLibVer;
     property Fingerprint: AnsiString read FFingerprint;
+    property HostKey: AnsiString read FHostKey;
+    property HostKeyType: Integer read FHostKeyType;
+    property HostKeyTypeStr: string read FHostKeyTypeStr;
     property RemoteBanner: AnsiString read FRemoteBanner;
     property AuthTypeSet: TSshAuthTypeSet read FAuthTypeSet;
     property AuthTypeStr: AnsiString read FAuthTypeStr;
@@ -83,6 +92,22 @@ implementation
 
 uses windows;
 
+
+function HostKeyTypeToStr(const AType: Integer): string;
+begin
+  case AType of
+    LIBSSH2_HOSTKEY_TYPE_UNKNOWN   : Result := 'Unknow';
+    LIBSSH2_HOSTKEY_TYPE_RSA       : Result := 'RSA';
+    LIBSSH2_HOSTKEY_TYPE_DSS       : Result := 'DSS';
+    LIBSSH2_HOSTKEY_TYPE_ECDSA_256 : Result := 'ECDSA_256';
+    LIBSSH2_HOSTKEY_TYPE_ECDSA_384 : Result := 'ECDSA_384';
+    LIBSSH2_HOSTKEY_TYPE_ECDSA_521 : Result := 'ECDSA_521';
+    LIBSSH2_HOSTKEY_TYPE_ED25519   : Result := 'ED25519';
+  else
+      Result := '';
+  end;
+end;
+
 var
   gLibVer: AnsiString;
 
@@ -91,14 +116,29 @@ begin
   Result := gLibVer
 end;
 
+function sshAllocMem(count: UINT; _abstract: PPointer): Pointer; cdecl;
+begin
+  Result := GetMemory(count);
+end;
+
+procedure sshFreeMem(ptr: Pointer; _abstract: PPointer); cdecl;
+begin
+  FreeMemory(ptr);
+end;
+
+function sshReallocMem(ptr: Pointer; count: UINT; _abstract: PPointer): Pointer; cdecl;
+begin
+  Result := ReallocMemory(ptr, count);
+end;
+
+
 { TBaseLibSsh2 }
 
 constructor TBaseLibSsh2.Create;
 begin
   inherited;
-
-  // Create a session instance
-  FSession := libssh2_session_init();
+  //FSession := libssh2_session_init();
+  FSession := libssh2_session_init_ex(sshAllocMem, sshFreeMem, sshReallocMem, nil);
   if Fsession = nil then
     RaiseSshError('libssh2_session_init ');
 end;
@@ -178,8 +218,12 @@ var
 begin
   I := 0;
   P := nil;
+
   if FSession <> nil then
+  begin
+
     libssh2_session_last_error(FSession, P, I, 0);
+  end;
   z := AnsiString(P);
   Result := string(z)
 end;
@@ -221,6 +265,27 @@ begin
 
   DoOnFingerprint();
   Result := FFingerprint;
+end;
+
+function TBaseLibSsh2.GetSessionHostkey: Integer;
+var
+  p: PAnsiChar;
+  l: Cardinal;
+  t: Integer;
+begin
+  FHostKey := '';
+  FHostKeyType := LIBSSH2_HOSTKEY_TYPE_UNKNOWN;
+  FHostKeyTypeStr := '';
+  //---
+  p := libssh2_session_hostkey(FSession, l, t);
+  if p <> nil then
+  begin
+    SetString(FHostKey, p, l);
+    FHostKeyType := t;
+    FHostKeyTypeStr := HostKeyTypeToStr(t);
+  end;
+
+  Result := FHostKeyType;
 end;
 
 function TBaseLibSsh2.GetLibVer: AnsiString;
@@ -283,23 +348,93 @@ begin
   Result := (rc <> SOCKET_ERROR) and (rc <> 0); // !Error and !Timeout
 end;
 
-function TBaseLibSsh2.Auth(const AUsername, APassword: AnsiString): Boolean;
+
+function sshStrDup(var A: AnsiString): PAnsiChar;
+begin
+  Result := sshAllocMem(Length(A) + 1, nil);
+  AnsiStrings.StrCopy(Result, PAnsiChar(A));
+end;
+
+threadvar
+  ssh_password: AnsiString;
+
+procedure kbd_callback(const name: PAnsiChar;
+                name_len: Integer;
+                const instruction: PAnsiChar;
+                instruction_len: Integer;
+                num_prompts: Integer;
+                const prompts: PLIBSSH2_USERAUTH_KBDINT_PROMPT;
+                var responses: LIBSSH2_USERAUTH_KBDINT_RESPONSE;
+                abstract: Pointer); cdecl;
+begin
+  if (num_prompts > 0) then
+  begin
+    responses.text := sshStrDup(ssh_password);
+    responses.length := Length(ssh_password);
+  end;
+end;
+
+function TBaseLibSsh2.AuthKeyboardIntecactive(const AUsername, APassword: AnsiString; ATerminatedEvent: TEvent): Boolean;
 var r: Integer;
 begin
-  r := libssh2_userauth_password(FSession, PAnsiChar(AUsername), PAnsiChar(APassword));
-  if r <> 0 then
+  while True do
   begin
-    RaiseSshError('auth fail, ');
-    Result := False;
-    Exit;
+    ssh_password := APassword;
+    r := libssh2_userauth_keyboard_interactive(FSession, PAnsiChar(AUsername), kbd_callback);
+    ssh_password := '';
+    if r <> 0 then
+    begin
+      if r = LIBSSH2_ERROR_EAGAIN then
+      begin
+        if Assigned(ATerminatedEvent) and (ATerminatedEvent.WaitFor(0) = wrSignaled) then
+        begin
+          Result := False;
+          Exit;
+        end;
+        Sleep(0);
+        Continue;
+      end;
+      //---
+      RaiseSshError('auth kb-interactive fail, ');
+      Result := False;
+      Exit;
+    end;
+    Break;
   end;
-
   Result := True;
 end;
 
-function TBaseLibSsh2.Auth(const AUsername, APassword: string): Boolean;
+function TBaseLibSsh2.Auth(const AUsername, APassword: AnsiString; ATerminatedEvent: TEvent): Boolean;
+var r: Integer;
 begin
-  Result := Auth(AnsiString(AUsername), AnsiString(APassword))
+  while True do
+  begin
+    r := libssh2_userauth_password(FSession, PAnsiChar(AUsername), PAnsiChar(APassword));
+    if r <> 0 then
+    begin
+      if r = LIBSSH2_ERROR_EAGAIN then
+      begin
+        if Assigned(ATerminatedEvent) and (ATerminatedEvent.WaitFor(0) = wrSignaled) then
+        begin
+          Result := False;
+          Exit;
+        end;
+        Sleep(0);
+        Continue;
+      end;
+      //---
+      RaiseSshError('auth fail, ');
+      Result := False;
+      Exit;
+    end;
+    Break;
+  end;
+  Result := True;
+end;
+
+function TBaseLibSsh2.Auth(const AUsername, APassword: string; ATerminatedEvent: TEvent): Boolean;
+begin
+  Result := Auth(AnsiString(AUsername), AnsiString(APassword), ATerminatedEvent)
 end;
 
 function TBaseLibSsh2.AuthPasswordSupport(const AUser: string): Boolean;
@@ -312,7 +447,7 @@ begin
   if FAuthTypeStr = '' then
     GetUserAuthList(AUser);
 
-  Result := SSH_AUTH_PASSWORD in FAuthTypeSet
+  Result := (SSH_AUTH_PASSWORD in FAuthTypeSet) or (SSH_AUTH_KEYBOARD_INTERACTIVE in FAuthTypeSet)
 end;
 
 function TBaseLibSsh2.Connect(const ASocket: TSocket): Boolean;
@@ -322,6 +457,7 @@ begin
   begin
     GetRemoteBanner();
     GetHostkeyHash();
+    GetSessionHostkey();
     Result := True;
     Exit
   end;
@@ -333,7 +469,7 @@ function TBaseLibSsh2.ConnectAndAuth(const ASocket: TSocket; const AUsername,
 begin
   if Connect(ASocket) then
   begin
-    Result := Auth(AUsername, APassword);
+    Result := Auth(AUsername, APassword, nil);
     Exit
   end;
   Result := False
