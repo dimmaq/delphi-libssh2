@@ -71,6 +71,7 @@ type
     function AuthKeyboardIntecactive(const AUsername, APassword: AnsiString; ATerminatedEvent: TEvent): Boolean;
     function Connect(const ASocket: TSocket): Boolean;
     function WaitSocket: Boolean;
+    function GetMethodTypeStr(const AType: Integer): AnsiString;
 
     property Socket: TSocket read FSocket write FSocket;
     property LibVersion: AnsiString read GetLibVer;
@@ -291,6 +292,13 @@ end;
 function TBaseLibSsh2.GetLibVer: AnsiString;
 begin
   Result := gLibVer
+end;
+
+function TBaseLibSsh2.GetMethodTypeStr(const AType: Integer): AnsiString;
+var p: PAnsiChar;
+begin
+  p := libssh2_session_methods(FSession, AType);
+  Result := p;
 end;
 
 function TBaseLibSsh2.GetRemoteBanner: AnsiString;
