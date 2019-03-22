@@ -57,7 +57,7 @@ type
       const AUsername, APassword: string): Boolean; overload;
     {$ENDIF}
   public
-    constructor Create;
+    constructor Create(const ABanner: AnsiString);
     destructor Destroy; override;
 
     function GetLastErrorNum: Integer;
@@ -92,7 +92,6 @@ function GetLibSsh2Ver: AnsiString;
 implementation
 
 uses windows;
-
 
 function HostKeyTypeToStr(const AType: Integer): string;
 begin
@@ -135,13 +134,21 @@ end;
 
 { TBaseLibSsh2 }
 
-constructor TBaseLibSsh2.Create;
+constructor TBaseLibSsh2.Create(const ABanner: AnsiString);
+var ret: Integer;
 begin
-  inherited;
+  inherited Create;
   //FSession := libssh2_session_init();
   FSession := libssh2_session_init_ex(sshAllocMem, sshFreeMem, sshReallocMem, nil);
   if Fsession = nil then
     RaiseSshError('libssh2_session_init ');
+
+  if ABanner <> '' then
+  begin
+    ret := libssh2_session_banner_set(FSession, PAnsiChar(ABanner));
+    if ret <> 0 then
+      RaiseSshError('libssh2_session_banner_set ');
+  end;
 end;
 
 destructor TBaseLibSsh2.Destroy;
@@ -157,7 +164,7 @@ end;
 procedure TBaseLibSsh2.RaiseSshError_(const A: string);
 begin
   if FRaiseError then
-    raise ELibSsh2Error.Create(A + string(GetLastErrorStr()))
+    raise ELibSsh2Error.Create(A + string(GetFormatErrorStr()))
 end;
 
 

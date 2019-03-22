@@ -68,22 +68,6 @@ type
   libssh2_socket_t = UINT_PTR;
   TLibssh2Socket = libssh2_socket_t;
 
-{+// We use underscore instead of dash when appending CVS in dev versions just }
-{-to make the BANNER define (used by src/session.c) be a valid SSH }
-{-banner. Release versions have no appended strings and may of course not }
-{=have dashes either. }
-const
-  _LIBSSH2_VERSION = '1.8.1_DEV';
-
-{+// The numeric version number is also available "in parts" by using these }
-{=defines: }
-const
-  LIBSSH2_VERSION_MAJOR = 1;
-const
-  LIBSSH2_VERSION_MINOR = 8;
-const
-  LIBSSH2_VERSION_PATCH = 1;
-
 const
   SHA_DIGEST_LENGTH = 20;
   MD5_DIGEST_LENGTH = 16;
@@ -107,27 +91,6 @@ const
 const
   LIBSSH2_VERSION_NUM = $010801;
 
-{+// }
-{-* This is the date and time when the full source package was created. The }
-{-* timestamp is not stored in CVS, as the timestamp is properly set in the }
-{-* tarballs by the maketgz script. }
-{-* }
-{-* The format of the date should follow this template: }
-{-* }
-{-* "Mon Feb 12 11:35:33 UTC 2007" }
-{= }
-const
-  LIBSSH2_TIMESTAMP = 'DEV';
-
-{+// Part of every banner, user specified or not*/ }
-const
-  LIBSSH2_SSH_BANNER = 'SSH-2.0-libssh2_' + _LIBSSH2_VERSION;
-
-{+// We*could* add a comment here if we so chose*/ }
-const
-  LIBSSH2_SSH_DEFAULT_BANNER = LIBSSH2_SSH_BANNER;
-const
-  LIBSSH2_SSH_DEFAULT_BANNER_WITH_CRLF = LIBSSH2_SSH_DEFAULT_BANNER + '#13#10';
 
 {+// Default generate and safe prime sizes for diffie-hellman-group-exchange-sha1*/ }
 const

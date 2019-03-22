@@ -15,7 +15,7 @@ type
     FChannel: PLIBSSH2_CHANNEL;
     FReadBuffer: AnsiString;
   public
-    constructor Create;
+    //constructor Create
     destructor Destroy; override;
 
     function OpenDirectTcpIp(const AHost: AnsiString; APort: Word): Boolean;
@@ -41,12 +41,12 @@ begin
   end;
   Result := True;
 end;
-
+{
 constructor TDirectTcpipLibSsh2.Create;
 begin
   inherited;
 end;
-
+}
 destructor TDirectTcpipLibSsh2.Destroy;
 begin
   CloseChannel();
