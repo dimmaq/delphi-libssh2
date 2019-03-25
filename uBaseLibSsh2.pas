@@ -12,7 +12,13 @@ uses
 type
   TBaseLibSsh2 = class;
 
-  ELibSsh2Error = class(Exception);
+  ELibSsh2Error = class(Exception)
+  private
+    FNum: Integer;
+  public
+    constructor Create(const ANum: Integer; const ATest: string);
+    property Num: Integer read FNum;
+  end;
 
   TFingerprintState = (fsNew, fsChanged);
   TConnectHashAction = (chaCancel, chaIgnore, chaSave);
@@ -63,7 +69,7 @@ type
 
     function GetLastErrorNum: Integer;
     function GetLastErrorStr: string;
-    function GetLastErrorStrA: string;
+    function GetLastErrorStrA: AnsiString;
     function GetFormatErrorStr: string;
 //    function GetSessionLastError: AnsiString;
     function AuthPasswordSupport(const AUser: AnsiString): Boolean; overload;
@@ -169,9 +175,14 @@ end;
 procedure TBaseLibSsh2.RaiseSshError_(const A: string);
 begin
   if FRaiseError then
-    raise ELibSsh2Error.Create(A + string(GetFormatErrorStr()))
+    raise ELibSsh2Error.Create(GetLastErrorNum(), A + GetFormatErrorStr())
 end;
 
+procedure TBaseLibSsh2.RaiseSshError(const A: AnsiString);
+begin
+  if FRaiseError then
+    RaiseSshError_(string(A))
+end;
 
 function TBaseLibSsh2.DoHandshake: Boolean;
 var r: Integer;
@@ -224,26 +235,22 @@ begin
 end;
 
 function TBaseLibSsh2.GetLastErrorStr: string;
+begin
+  Result := string(GetLastErrorStrA()) // cast
+end;
+
+function TBaseLibSsh2.GetLastErrorStrA: AnsiString;
 var
   I: Integer;
   P: PAnsiChar;
-  z: AnsiString;
 begin
   I := 0;
   P := nil;
-
   if FSession <> nil then
   begin
-
     libssh2_session_last_error(FSession, P, I, 0);
   end;
-  z := AnsiString(P);
-  Result := string(z)
-end;
-
-procedure TBaseLibSsh2.RaiseSshError(const A: AnsiString);
-begin
-  RaiseSshError_(string(A))
+  Result := AnsiString(P);
 end;
 
 function TBaseLibSsh2.GetFormatErrorStr: string;
@@ -385,18 +392,21 @@ procedure kbd_callback(const name: PAnsiChar;
                 abstract_: PPointer); cdecl;
 var
   ssh: TBaseLibSsh2;
-  j: Integer;
-  z: AnsiString;
+//  j: Integer;
+//  z: AnsiString;
 begin
+{
+  gApp.Log.Info('-------------------------------------------');
   gApp.Log.Info('*kbd_callback*');
   gApp.Log.Info('Name: ' + name);
   gApp.Log.Info('instruction: ' + instruction);
   for j := 0 to num_prompts - 1 do
   begin
     SetString(z, prompts[j].text, prompts[j].length);
-    gApp.Log.Info(prompts[j].echo.ToString + ' prompts[]: ' + z);
+    gApp.Log.Info(prompts[j].echo.ToString + ' prompts[]: ' + string(z));
   end;
-
+  gApp.Log.Info('-------------------------------------------');
+}
   if abstract_ = nil then
     Exit;
   if abstract_^ = nil then
@@ -531,9 +541,17 @@ begin
 
   p := libssh2_version(LIBSSH2_VERSION_NUM);
   if nil = p then
-    raise ELibSsh2Error.Create('libssh2.dll to old');
+    raise ELibSsh2Error.Create(0, 'libssh2.dll to old');
 
   gLibVer := p;
+end;
+
+{ ELibSsh2Error }
+
+constructor ELibSsh2Error.Create(const ANum: Integer; const ATest: string);
+begin
+  FNum := ANum;
+  inherited Create(ATest);
 end;
 
 initialization
