@@ -26,6 +26,7 @@ type
 
   TBaseLibSsh2 = class
   private
+    FInteractivePassword: AnsiString;
     function GetTimeout: Integer;
     procedure SetTimeout(const Value: Integer);
   protected
@@ -62,6 +63,7 @@ type
 
     function GetLastErrorNum: Integer;
     function GetLastErrorStr: string;
+    function GetLastErrorStrA: string;
     function GetFormatErrorStr: string;
 //    function GetSessionLastError: AnsiString;
     function AuthPasswordSupport(const AUser: AnsiString): Boolean; overload;
@@ -91,7 +93,10 @@ function GetLibSsh2Ver: AnsiString;
 
 implementation
 
-uses windows;
+uses
+  Windows,
+  //
+  uApp;
 
 function HostKeyTypeToStr(const AType: Integer): string;
 begin
@@ -139,7 +144,7 @@ var ret: Integer;
 begin
   inherited Create;
   //FSession := libssh2_session_init();
-  FSession := libssh2_session_init_ex(sshAllocMem, sshFreeMem, sshReallocMem, nil);
+  FSession := libssh2_session_init_ex(sshAllocMem, sshFreeMem, sshReallocMem, Self);
   if Fsession = nil then
     RaiseSshError('libssh2_session_init ');
 
@@ -370,9 +375,6 @@ begin
   AnsiStrings.StrCopy(Result, PAnsiChar(A));
 end;
 
-threadvar
-  ssh_password: AnsiString;
-
 procedure kbd_callback(const name: PAnsiChar;
                 name_len: Integer;
                 const instruction: PAnsiChar;
@@ -380,12 +382,34 @@ procedure kbd_callback(const name: PAnsiChar;
                 num_prompts: Integer;
                 const prompts: PLIBSSH2_USERAUTH_KBDINT_PROMPT;
                 var responses: LIBSSH2_USERAUTH_KBDINT_RESPONSE;
-                abstract: Pointer); cdecl;
+                abstract_: PPointer); cdecl;
+var
+  ssh: TBaseLibSsh2;
+  j: Integer;
+  z: AnsiString;
 begin
+  gApp.Log.Info('*kbd_callback*');
+  gApp.Log.Info('Name: ' + name);
+  gApp.Log.Info('instruction: ' + instruction);
+  for j := 0 to num_prompts - 1 do
+  begin
+    SetString(z, prompts[j].text, prompts[j].length);
+    gApp.Log.Info(prompts[j].echo.ToString + ' prompts[]: ' + z);
+  end;
+
+  if abstract_ = nil then
+    Exit;
+  if abstract_^ = nil then
+    Exit;
+
+  if not (TObject(abstract_^) is TBaseLibSsh2) then
+    Exit;
+  ssh := TBaseLibSsh2(abstract_^);
+
   if (num_prompts > 0) then
   begin
-    responses.text := sshStrDup(ssh_password);
-    responses.length := Length(ssh_password);
+    responses.text := sshStrDup(ssh.FInteractivePassword);
+    responses.length := Length(ssh.FInteractivePassword);
   end;
 end;
 
@@ -394,9 +418,9 @@ var r: Integer;
 begin
   while True do
   begin
-    ssh_password := APassword;
+    FInteractivePassword := APassword;
     r := libssh2_userauth_keyboard_interactive(FSession, PAnsiChar(AUsername), kbd_callback);
-    ssh_password := '';
+    FInteractivePassword := '';
     if r <> 0 then
     begin
       if r = LIBSSH2_ERROR_EAGAIN then
@@ -404,7 +428,7 @@ begin
         if Assigned(ATerminatedEvent) and (ATerminatedEvent.WaitFor(0) = wrSignaled) then
         begin
           Result := False;
-          Exit;
+      Exit;
         end;
         Sleep(0);
         Continue;

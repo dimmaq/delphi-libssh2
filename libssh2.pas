@@ -171,7 +171,7 @@ type
     length: UInt;
     echo: Byte;
   end {_LIBSSH2_USERAUTH_KBDINT_PROMPT};
-  LIBSSH2_USERAUTH_KBDINT_PROMPT = _LIBSSH2_USERAUTH_KBDINT_PROMPT;
+  LIBSSH2_USERAUTH_KBDINT_PROMPT = array[0..255] of _LIBSSH2_USERAUTH_KBDINT_PROMPT;
   PLIBSSH2_USERAUTH_KBDINT_PROMPT = ^LIBSSH2_USERAUTH_KBDINT_PROMPT;
 
 type
@@ -196,7 +196,7 @@ type
                 num_prompts: Integer;
                 const prompts: PLIBSSH2_USERAUTH_KBDINT_PROMPT;
                 var responses: LIBSSH2_USERAUTH_KBDINT_RESPONSE;
-                _abstract: Pointer); cdecl;
+                _abstract: PPointer); cdecl;
 {+// Callbacks for special SSH packets*/ }
 type
   LIBSSH2_IGNORE_FUNC = procedure (session: PLIBSSH2_SESSION;
