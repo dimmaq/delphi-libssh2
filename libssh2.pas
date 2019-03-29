@@ -653,7 +653,7 @@ function libssh2_userauth_list(session: PLIBSSH2_SESSION;
                                const username: PAnsiChar; 
                                username_len: UINT): PAnsiChar; cdecl  ; 
 
-function libssh2_userauth_authenticated(session: PLIBSSH2_SESSION): Integer; cdecl  ;
+function libssh2_userauth_authenticated(session: PLIBSSH2_SESSION): LongBool; cdecl  ;
 
 
 function libssh2_userauth_password_ex(session: PLIBSSH2_SESSION;
