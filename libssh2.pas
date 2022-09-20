@@ -1,7 +1,5 @@
 unit libssh2;
-
 // **zm ** translated to pascal
-
 interface
 uses
 {$IFDEF WIN32}
@@ -9,7 +7,6 @@ uses
 {$ELSE}
   Wintypes, WinProcs;
 {$ENDIF}
-
 {+// Copyright (c) 2004-2009, Sara Golemon <sarag@libssh2.org> }
 {-* Copyright (c) 2009 by Daniel Stenberg }
 {-* Copyright (c) 2010 Simon Josefsson <simon@josefsson.org>}
@@ -48,11 +45,9 @@ uses
 {-* USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY }
 {-* OF SUCH DAMAGE. }
 {= }
-
 const
   libssh2_name = 'libssh2.dll';
   NULL = nil;
-
 type
   libssh2_uint64_t = UInt64;
 type
@@ -63,34 +58,27 @@ type
   ssize_t = Integer;
 type
    time_t = ULong;
-
 type
   libssh2_socket_t = UINT_PTR;
   TLibssh2Socket = libssh2_socket_t;
-
 const
   SHA_DIGEST_LENGTH = 20;
   MD5_DIGEST_LENGTH = 16;
 
-
 {+// This is the numeric version of the libssh2 version number, meant for easier }
 {-parsing and comparions by programs. The LIBSSH2_VERSION_NUM define will }
 {-always follow this syntax: }
-
 {-0xXXYYZZ }
-
 {-Where XX, YY and ZZ are the main version, release and patch numbers in }
 {-hexadecimal (using 8 bits each). All three numbers are always represented }
 {-using two digits. 1.2 would appear as "0x010200" while version 9.11.7 }
 {-appears as "0x090b07". }
-
 {-This 6-digit (24 bits) hexadecimal number does not show pre-release number, }
 {-and it is always a greater number in a more recent release. It makes }
 {-comparisons with greater than and less than work. }
 {= }
 const
   LIBSSH2_VERSION_NUM = $010801;
-
 
 {+// Default generate and safe prime sizes for diffie-hellman-group-exchange-sha1*/ }
 const
@@ -99,7 +87,6 @@ const
   LIBSSH2_DH_GEX_OPTGROUP = 1536;
 const
   LIBSSH2_DH_GEX_MAXGROUP = 2048;
-
 {+// Defaults for pty requests*/ }
 const
   LIBSSH2_TERM_WIDTH = 80;
@@ -109,35 +96,29 @@ const
   LIBSSH2_TERM_WIDTH_PX = 0;
 const
   LIBSSH2_TERM_HEIGHT_PX = 0;
-
 {+// 1/4 second*/ }
 const
   LIBSSH2_SOCKET_POLL_UDELAY = 250000;
 {+// 0.25* 120 == 30 seconds*/ }
 const
   LIBSSH2_SOCKET_POLL_MAXLOOPS = 120;
-
 {+// Maximum size to allow a payload to compress to, plays it safe by falling }
 {=short of spec limits }
 const
   LIBSSH2_PACKET_MAXCOMP = 32000;
-
 {+// Maximum size to allow a payload to deccompress to, plays it safe by }
 {=allowing more than spec requires }
 const
   LIBSSH2_PACKET_MAXDECOMP = 40000;
-
 {+// Maximum size for an inbound compressed payload, plays it safe by }
 {=overshooting spec limits }
 const
   LIBSSH2_PACKET_MAXPAYLOAD = 40000;
-
 {/* Malloc callbacks */}
 type
 	LIBSSH2_ALLOC_FUNC = function(count: uint; _abstract: PPointer): Pointer; cdecl;
 	LIBSSH2_REALLOC_FUNC = function(ptr: Pointer; count: uint; _abstract: PPointer): Pointer; cdecl;
 	LIBSSH2_FREE_FUNC = procedure(ptr: Pointer; _abstract: PPointer); cdecl;
-
 
 type
   _LIBSSH2_SESSION = record
@@ -150,7 +131,6 @@ type
   end;
  _LIBSSH2_AGENT = record
   end;
-
 type
   LIBSSH2_SESSION = _LIBSSH2_SESSION;
   LIBSSH2_CHANNEL = _LIBSSH2_CHANNEL;
@@ -162,9 +142,7 @@ type
   PLIBSSH2_LISTENER = ^LIBSSH2_LISTENER;
   PLIBSSH2_KNOWNHOSTS = ^LIBSSH2_KNOWNHOSTS;
   PLIBSSH2_AGENT = ^LIBSSH2_AGENT;
-
  SIZE_T = UINT;
-
 type
   _LIBSSH2_USERAUTH_KBDINT_PROMPT = record
     text: PAnsiChar;
@@ -173,20 +151,17 @@ type
   end {_LIBSSH2_USERAUTH_KBDINT_PROMPT};
   LIBSSH2_USERAUTH_KBDINT_PROMPT = array[0..255] of _LIBSSH2_USERAUTH_KBDINT_PROMPT;
   PLIBSSH2_USERAUTH_KBDINT_PROMPT = ^LIBSSH2_USERAUTH_KBDINT_PROMPT;
-
 type
   _LIBSSH2_USERAUTH_KBDINT_RESPONSE = record
     text: PAnsiChar;
     length: UInt;
   end {_LIBSSH2_USERAUTH_KBDINT_RESPONSE};
   LIBSSH2_USERAUTH_KBDINT_RESPONSE = _LIBSSH2_USERAUTH_KBDINT_RESPONSE;
-
 {/* 'publickey' authentication callback */}
 type 
  LIBSSH2_USERAUTH_PUBLICKEY_SIGN_FUNC = function(
   session: PLIBSSH2_SESSION; var sig: PByte; sig_len: size_t;
            const data: PByte; data_len: size_t; _abstract: Pointer): Integer; cdecl;
-
 {+// 'keyboard-interactive' authentication callback*/ }
 type
   LIBSSH2_USERAUTH_KBDINT_RESPONSE_FUNC = procedure (const name: PAnsiChar;
@@ -241,7 +216,6 @@ type
                channel: PLIBSSH2_CHANNEL;
                var channel_abstract: Pointer); cdecl  ;
 							 
-
 {/* I/O callbacks */}
 type
 	LIBSSH2_RECV_FUNC = function (socket: libssh2_socket_t; 
@@ -251,7 +225,6 @@ type
 	LIBSSH2_SEND_FUNC = function (socket: libssh2_socket_t;
                                 const buffer: Pointer; length: size_t;
                                 flags: Integer; _abstract: PPointer): ssize_t; cdecl;
-
 
 {+// libssh2_session_callback_set() constants*/ }
 const
@@ -268,7 +241,6 @@ const
 	LIBSSH2_CALLBACK_SEND = 5;
 const
 	LIBSSH2_CALLBACK_RECV = 6;
-
 {+// libssh2_session_method_pref() constants*/ }
 const
   LIBSSH2_METHOD_KEX = 0;
@@ -290,12 +262,10 @@ const
   LIBSSH2_METHOD_LANG_CS = 8;
 const
   LIBSSH2_METHOD_LANG_SC = 9;
-
 {+// session.flags bits*/ }
 const
   LIBSSH2_FLAG_SIGPIPE = $00000001;
   LIBSSH2_FLAG_COMPRESS = $00000002;
-
 type
   PLIBSSH2_POLLFD = ^_LIBSSH2_POLLFD;
   _LIBSSH2_POLLFD = record
@@ -310,10 +280,8 @@ type
 {=connections waiting to be accepted? }
   end {fd};
   LIBSSH2_POLLFD = _LIBSSH2_POLLFD;
-
 {= Requested Events }
 {= Returned Events }
-
 {+// Poll FD Descriptor Types*/ }
 const
   LIBSSH2_POLLFD_SOCKET = 1;
@@ -321,7 +289,6 @@ const
   LIBSSH2_POLLFD_CHANNEL = 2;
 const
   LIBSSH2_POLLFD_LISTENER = 3;
-
 {+// Note: Win32 Doesn't actually have a poll() implementation, so some of these }
 {=values are faked with select() data }
 {+// Poll FD events/revents -- Match sys/poll.h where possible*/ }
@@ -352,7 +319,6 @@ const
   LIBSSH2_POLLFD_CHANNEL_CLOSED =  $0080; {/* Channel Disconnect */}
 const
   LIBSSH2_POLLFD_LISTENER_CLOSED = $0080; {/* Listener Disconnect*/}
-
 const
   HAVE_LIBSSH2_SESSION_BLOCK_DIRECTION = 1;
 	
@@ -361,7 +327,6 @@ const
   LIBSSH2_SESSION_BLOCK_INBOUND = $0001;
 const
   LIBSSH2_SESSION_BLOCK_OUTBOUND = $0002;
-
 {+// Hash Types*/ }
 const
   LIBSSH2_HOSTKEY_HASH_MD5 = 1;
@@ -369,7 +334,6 @@ const
   LIBSSH2_HOSTKEY_HASH_SHA1 = 2;
 const
 	LIBSSH2_HOSTKEY_HASH_SHA256 = 3;
-
 {+// Hostkey Types */ }
 const
   LIBSSH2_HOSTKEY_TYPE_UNKNOWN = 0;
@@ -385,7 +349,6 @@ const
 	LIBSSH2_HOSTKEY_TYPE_ECDSA_521 = 5;
 const
 	LIBSSH2_HOSTKEY_TYPE_ED25519 = 6;
-
 {+// Disconnect Codes (defined by SSH protocol)*/ }
 const
   SSH_DISCONNECT_HOST_NOT_ALLOWED_TO_CONNECT = 1;
@@ -417,7 +380,6 @@ const
   SSH_DISCONNECT_NO_MORE_AUTH_METHODS_AVAILABLE = 14;
 const
   SSH_DISCONNECT_ILLEGAL_USER_NAME = 15;
-
 {+// Error Codes (defined by libssh2)*/ }
 const
   LIBSSH2_ERROR_NONE = 0;
@@ -519,11 +481,9 @@ const
 	LIBSSH2_ERROR_CHANNEL_WINDOW_FULL  = -47;
 const
 	LIBSSH2_ERROR_KEYFILE_AUTH_FAILED  = -48;
-
 {/* this is a define to provide the old (<= 1.2.7) name */}
 const
 	LIBSSH2_ERROR_BANNER_NONE = LIBSSH2_ERROR_BANNER_RECV;
-
 
 {+// Global API*/}
 const
@@ -543,7 +503,6 @@ const
  * Returns 0 if succeeded, or a negative value for error.
  */}
 function libssh2_init(flags: Integer): Integer; cdecl;
-
 {/*
  * libssh2_exit()
  *
@@ -551,14 +510,12 @@ function libssh2_init(flags: Integer): Integer; cdecl;
  */}
 procedure libssh2_exit; cdecl;
 	
-
 {/*
  * libssh2_free()
  *
  * Deallocate memory allocated by earlier call to libssh2 functions.
  */}
 procedure libssh2_free(session: PLIBSSH2_SESSION; ptr: Pointer); cdecl;
-
 {/*
  * libssh2_session_supported_algs()
  *
@@ -573,88 +530,62 @@ function libssh2_session_supported_algs(session: PLIBSSH2_SESSION;
                                         method_type: Integer;
                                         var algs: PPAnsiChar): Integer; cdecl;
 
-
 {+// Session API*/ }
-
 function libssh2_session_init_ex(my_alloc: LIBSSH2_ALLOC_FUNC;
                                  my_free: LIBSSH2_FREE_FUNC;
                                  my_realloc: LIBSSH2_REALLOC_FUNC;
                                  _abstract: Pointer): PLIBSSH2_SESSION; cdecl;
 
-
 function libssh2_session_handshake(session: PLIBSSH2_SESSION;
   socket: TLibssh2Socket): Integer; cdecl;
 
-
 function libssh2_session_init: PLIBSSH2_SESSION; inline;
-
 function libssh2_session_abstract(session: PLIBSSH2_SESSION): Pointer; cdecl;
-
 function libssh2_session_callback_set(session: PLIBSSH2_SESSION;
                                       cbtype: Integer;
                                       callback: Pointer): Pointer; cdecl;
-
 function libssh2_banner_set(session: PLIBSSH2_SESSION;
                             const banner: PAnsiChar): Integer; cdecl;
 
-
 function libssh2_session_banner_set(session: PLIBSSH2_SESSION;
   const banner: PAnsiChar): Integer; cdecl;
-
 function libssh2_session_banner_get(session: PLIBSSH2_SESSION): PAnsiChar; cdecl;
-
 function libssh2_session_startup(session: PLIBSSH2_SESSION;
                                  sock: Integer): Integer; cdecl;
-
 function libssh2_session_disconnect_ex(session: PLIBSSH2_SESSION;
                                        reason: Integer;
                                        const description: PAnsiChar;
                                        const lang: PAnsiChar): Integer; cdecl  ;
-
 function libssh2_session_disconnect(session: PLIBSSH2_SESSION; const description: PAnsiChar): Integer; inline;
-
 function libssh2_session_free(session: PLIBSSH2_SESSION): Integer; cdecl  ;
-
 
 function libssh2_hostkey_hash(session: PLIBSSH2_SESSION;
                               hash_type: Integer): PAnsiChar; cdecl  ;
-
 function libssh2_session_hostkey(session: PLIBSSH2_SESSION;
                                                 var len: size_t;
                                                 var _type: Integer): PAnsiChar; cdecl;
 
-
 function libssh2_session_method_pref(session: PLIBSSH2_SESSION;
                                      method_type: Integer; 
                                      const prefs: PAnsiChar): Integer; cdecl  ;
-
 function libssh2_session_methods(session: PLIBSSH2_SESSION;
                                  method_type: Integer): PAnsiChar; cdecl  ; 
-
 function libssh2_session_last_error(session: PLIBSSH2_SESSION;
                                     var errmsg: PAnsiChar; 
                                     var errmsg_len: Integer; 
                                     want_buf: Integer): Integer; cdecl; 
-
 function libssh2_session_last_errno(session: PLIBSSH2_SESSION): Integer; cdecl  ;
-
 function libssh2_session_block_directions(session: PLIBSSH2_SESSION): Integer; cdecl  ;
-
 
 function libssh2_session_flag(session: PLIBSSH2_SESSION;
                               flag: Integer;
                               value: Integer): Integer; cdecl  ;
 
-
-
 {+// Userauth API*/ }
-
 function libssh2_userauth_list(session: PLIBSSH2_SESSION;
                                const username: PAnsiChar; 
                                username_len: UINT): PAnsiChar; cdecl  ; 
-
 function libssh2_userauth_authenticated(session: PLIBSSH2_SESSION): LongBool; cdecl  ;
-
 
 function libssh2_userauth_password_ex(session: PLIBSSH2_SESSION;
                                       const username: PAnsiChar; 
@@ -662,19 +593,15 @@ function libssh2_userauth_password_ex(session: PLIBSSH2_SESSION;
                                       const password: PAnsiChar; 
                                       password_len: Uint;
                                       passwd_change_cb: LIBSSH2_PASSWD_CHANGEREQ_FUNC): Integer; cdecl  ;
-
 function libssh2_userauth_password(session: PLIBSSH2_SESSION; const username: PAnsiChar; const password: PAnsiChar): Integer; inline;
-
 function libssh2_userauth_publickey_fromfile_ex(session: PLIBSSH2_SESSION;
                                                 const username: PAnsiChar; 
                                                 username_len: Uint; 
                                                 const publickey: PAnsiChar; 
                                                 const privatekey: PAnsiChar;
                                                 const passphrase: PAnsiChar): Integer; cdecl  ;
-
 function libssh2_userauth_publickey_fromfile(session: PLIBSSH2_SESSION; const username: PAnsiChar;
     const publickey: PAnsiChar; const privatekey: PAnsiChar; const passphrase: PAnsiChar): Integer; inline;
-
 function libssh2_userauth_hostbased_fromfile_ex(session: PLIBSSH2_SESSION;
                                                 const username: PAnsiChar;
                                                 username_len: Uint; 
@@ -685,7 +612,6 @@ function libssh2_userauth_hostbased_fromfile_ex(session: PLIBSSH2_SESSION;
                                                 hostname_len: UInt;
                                                 local_username: PAnsiChar;
                                                 local_username_len: UInt): Integer; cdecl  ;
-
 function libssh2_userauth_hostbased_fromfile(session: PLIBSSH2_SESSION; const username: PAnsiChar; const publickey: PAnsiChar;
     const privatekey: PAnsiChar; const passphrase: PAnsiChar; const hostname: PAnsiChar): Integer; inline;
     
@@ -695,18 +621,14 @@ function libssh2_userauth_hostbased_fromfile(session: PLIBSSH2_SESSION; const us
 {-* array is already allocated. Responses data will be freed by libssh2 }
 {-* after callback return, but before subsequent callback invokation. }
 {= }
-
 function libssh2_userauth_keyboard_interactive_ex(session: PLIBSSH2_SESSION;
                                                   const username: PAnsiChar;
                                                   username_len: UInt;
                                                   response_callback: LIBSSH2_USERAUTH_KBDINT_RESPONSE_FUNC): Integer; cdecl  ;
-
 function libssh2_userauth_keyboard_interactive(session: PLIBSSH2_SESSION; const username: PAnsiChar;  response_callback: LIBSSH2_USERAUTH_KBDINT_RESPONSE_FUNC): Integer; inline;
-
 function libssh2_poll(var fds: LIBSSH2_POLLFD; 
                       nfds: UInt;
                       timeout: LongInt): Integer; cdecl  ; 
-
 {+// Channel API*/ }
 const
   LIBSSH2_CHANNEL_WINDOW_DEFAULT = (2*1024*1024);
@@ -714,7 +636,6 @@ const
   LIBSSH2_CHANNEL_PACKET_DEFAULT = 32768;
 const
   LIBSSH2_CHANNEL_MINADJUST = 1024;
-
 {+// Extended Data Handling*/ }
 const
   LIBSSH2_CHANNEL_EXTENDED_DATA_NORMAL = 0;
@@ -722,14 +643,11 @@ const
   LIBSSH2_CHANNEL_EXTENDED_DATA_IGNORE = 1;
 const
   LIBSSH2_CHANNEL_EXTENDED_DATA_MERGE = 2;
-
 const
   SSH_EXTENDED_DATA_STDERR = 1;
-
 {+// Returned by any function that would block during a read/write opperation*/ }
 const
   LIBSSH2CHANNEL_EAGAIN = LIBSSH2_ERROR_EAGAIN;
-
 function libssh2_channel_open_ex(session: PLIBSSH2_SESSION;
                                  const channel_type: PAnsiChar; 
                                  channel_type_len: Uint;
@@ -737,39 +655,29 @@ function libssh2_channel_open_ex(session: PLIBSSH2_SESSION;
                                  packet_size: Uint; 
                                  const message: PAnsiChar; 
                                  message_len: Uint): PLIBSSH2_CHANNEL; cdecl  ; 
-
 function libssh2_channel_open_session(session: PLIBSSH2_SESSION): PLIBSSH2_CHANNEL; //inline;
-
 function libssh2_channel_direct_tcpip_ex(session: PLIBSSH2_SESSION;
                                          const host: PAnsiChar;
                                          port: Integer; 
                                          const shost: PAnsiChar; 
                                          sport: Integer): PLIBSSH2_CHANNEL; cdecl  ;
-
 function libssh2_channel_direct_tcpip(session: PLIBSSH2_SESSION; const host: PAnsiChar; port: Integer): PLIBSSH2_CHANNEL; inline;
-
 function libssh2_channel_forward_listen_ex(session: PLIBSSH2_SESSION;
                                            const host: PAnsiChar;
                                            port: Integer;
                                            var bound_port: Integer;
                                            queue_maxsize: Integer): PLIBSSH2_LISTENER cdecl  ;
-
 function libssh2_channel_forward_listen(session: PLIBSSH2_SESSION; port: Integer): PLIBSSH2_LISTENER; inline;
-
 function libssh2_channel_forward_cancel(listener: PLIBSSH2_LISTENER): Integer; cdecl  ;
 
-
 function libssh2_channel_forward_accept(listener: PLIBSSH2_LISTENER): PLIBSSH2_CHANNEL; cdecl  ;
-
 
 function libssh2_channel_setenv_ex(channel: PLIBSSH2_CHANNEL;
                                    const varname: PAnsiChar;
                                    varname_len: Uint;
                                    const value: PAnsiChar;
                                    value_len: UInt): Integer; cdecl  ; 
-
 function libssh2_channel_setenv(channel: PLIBSSH2_CHANNEL; const varname: PAnsiChar; const value: PAnsiChar): Integer; inline;
-
 function libssh2_channel_request_pty_ex(channel: PLIBSSH2_CHANNEL;
                                         const term: PAnsiChar;
                                         term_len: Uint;
@@ -779,25 +687,19 @@ function libssh2_channel_request_pty_ex(channel: PLIBSSH2_CHANNEL;
                                         height: Integer;
                                         width_px: Integer; 
                                         height_px: Integer): Integer; cdecl  ;
-
 function libssh2_channel_request_pty(channel: PLIBSSH2_CHANNEL; const term: PAnsiChar): Integer; inline;
-
 function libssh2_channel_request_pty_size_ex(channel: PLIBSSH2_CHANNEL;
                                              width: Integer;
                                              height: Integer;
                                              width_px: Integer; 
                                              height_px: Integer): Integer; cdecl  ;
-
 function libssh2_channel_request_pty_size(channel: PLIBSSH2_CHANNEL; width: Integer; height: Integer): Integer; inline;
-
 function libssh2_channel_x11_req_ex(channel: PLIBSSH2_CHANNEL;
                                     single_connection: Integer; 
                                     const auth_proto: PAnsiChar; 
                                     const auth_cookie: PAnsiChar; 
                                     screen_number: Integer): Integer; cdecl  ;
-
 function libssh2_channel_x11_req(channel: PLIBSSH2_CHANNEL; screen_number: Integer): Integer; inline;
-
 function libssh2_channel_process_startup(channel: PLIBSSH2_CHANNEL;
                                          const request: PAnsiChar; 
                                          request_len: UInt;
@@ -805,81 +707,56 @@ function libssh2_channel_process_startup(channel: PLIBSSH2_CHANNEL;
                                          message_len: UInt): Integer; cdecl  ;
                                          
 function libssh2_channel_shell(channel: PLIBSSH2_CHANNEL): Integer; inline;
-
 function libssh2_channel_exec(channel: PLIBSSH2_CHANNEL; const command: PAnsiChar): Integer; inline;
-
 function libssh2_channel_subsystem(channel: PLIBSSH2_CHANNEL; const subsystem: PAnsiChar): Integer; inline;
-
 function libssh2_channel_read_ex(channel: PLIBSSH2_CHANNEL;
                                  stream_id: Integer; 
                                  buf: PAnsiChar; 
                                  buflen: SIZE_T): Integer; cdecl  ;
-
 function libssh2_channel_read(channel: PLIBSSH2_CHANNEL; buf: PAnsiChar; buflen: SIZE_T): Integer; inline;
-
 function libssh2_channel_read_stderr(channel: PLIBSSH2_CHANNEL; buf: PAnsiChar; buflen: SIZE_T): Integer; inline;
-
 function libssh2_poll_channel_read(channel: PLIBSSH2_CHANNEL;
                                    extended: Integer): Integer; cdecl  ; 
-
 
 function libssh2_channel_window_read_ex(channel: PLIBSSH2_CHANNEL;
                                         var read_avail: LongInt; 
                                         var window_size_initial: LongInt): ULong; cdecl  ;
-
 function libssh2_channel_window_read(channel: PLIBSSH2_CHANNEL): ULong; inline;
-
 {+// libssh2_channel_receive_window_adjust is DEPRECATED, do not use!*/ }
-
 function libssh2_channel_receive_window_adjust(channel: PLIBSSH2_CHANNEL;
                                                adjustment: LongInt; 
                                                force: Byte): LongInt; cdecl  ; 
-
 
 function libssh2_channel_receive_window_adjust2(channel: PLIBSSH2_CHANNEL;
                                                 adjustment: LongInt; 
                                                 force: Byte; 
                                                 var storewindow: ULong): Integer; cdecl  ; 
 
-
 function libssh2_channel_write_ex(channel: PLIBSSH2_CHANNEL;
                                   stream_id: Integer; 
                                   const buf: PAnsiChar;
                                   buflen: ULong): Integer; cdecl  ;
-
 function libssh2_channel_write(channel: PLIBSSH2_CHANNEL; const buf: PAnsiChar; buflen: ULong): Integer; inline;
-
 function libssh2_channel_write_stderr(channel: PLIBSSH2_CHANNEL; const buf: PAnsiChar; buflen: ULong): Integer; inline;
-
 
 function libssh2_channel_window_write_ex(channel: PLIBSSH2_CHANNEL;
                                          var window_size_initial: LongInt): ULong; cdecl  ;
-
 function libssh2_channel_window_write(channel: PLIBSSH2_CHANNEL): ULong; inline;
-
 procedure libssh2_session_set_blocking(session: PLIBSSH2_SESSION;
                                        blocking: Integer); cdecl  ;
-
 function libssh2_session_get_blocking(session: PLIBSSH2_SESSION): Integer; cdecl  ;
-
 
 procedure libssh2_channel_set_blocking(channel: PLIBSSH2_CHANNEL;
                                        blocking: Integer); cdecl  ;
-
 function libssh2_session_get_timeout(session: PLIBSSH2_SESSION): LONG; cdecl;
-
 procedure libssh2_session_set_timeout(session: PLIBSSH2_SESSION;
                                       timeout: long); cdecl;
 
-
 {+// libssh2_channel_handle_extended_data is DEPRECATED, do not use!*/ }
-
 procedure libssh2_channel_handle_extended_data(channel: PLIBSSH2_CHANNEL;
                                               ignore_mode: Integer); cdecl  ;
-
 function libssh2_channel_handle_extended_data2(channel: PLIBSSH2_CHANNEL;
                                                ignore_mode: Integer): Integer; cdecl  ;
-
 {+// libssh2_channel_ignore_extended_data() is defined below for BC with version }
 {-* 0.1 }
 {-* }
@@ -889,33 +766,21 @@ function libssh2_channel_handle_extended_data2(channel: PLIBSSH2_CHANNEL;
 {= }
 {+// DEPRECATED*/ }
 procedure libssh2_channel_ignore_extended_data(channel: PLIBSSH2_CHANNEL; ignore: Integer); inline;
-
 const
   LIBSSH2_CHANNEL_FLUSH_EXTENDED_DATA = -1;
 const
   LIBSSH2_CHANNEL_FLUSH_ALL = -2;
-
 function libssh2_channel_flush_ex(channel: PLIBSSH2_CHANNEL;
                                   streamid: Integer): Integer; cdecl  ;
-
 function libssh2_channel_flush(channel: PLIBSSH2_CHANNEL): Integer; inline;
-
 function libssh2_channel_flush_stderr(channel: PLIBSSH2_CHANNEL): Integer; inline;
-
 function libssh2_channel_get_exit_status(channel: PLIBSSH2_CHANNEL): Integer; cdecl  ;
-
 function libssh2_channel_send_eof(channel: PLIBSSH2_CHANNEL): Integer; cdecl  ;
-
 function libssh2_channel_eof(channel: PLIBSSH2_CHANNEL): Integer; cdecl  ;
-
 function libssh2_channel_wait_eof(channel: PLIBSSH2_CHANNEL): Integer; cdecl  ;
-
 function libssh2_channel_close(channel: PLIBSSH2_CHANNEL): Integer; cdecl  ;
-
 function libssh2_channel_wait_closed(channel: PLIBSSH2_CHANNEL): Integer; cdecl  ;
-
 function libssh2_channel_free(channel: PLIBSSH2_CHANNEL): Integer; cdecl  ;
-
 
 type
  Pstruct_stat = ^struct_stat;
@@ -932,7 +797,6 @@ type
    st_mtime: Int64;
    st_ctime: Int64;
  end;
-
 (*
  struct _stat64 {
         _dev_t     st_dev;
@@ -965,17 +829,14 @@ type
 //  PLibssh2StructStat = ^TLibssh2StructStat;
 //  TLibssh2StructStat = libssh2_struct_stat;
 
-
 {/* libssh2_scp_recv is DEPRECATED, do not use! */}
 function libssh2_scp_recv(session: PLIBSSH2_SESSION;
                           const path: PAnsiChar;
                           var sb: struct_stat): PLIBSSH2_CHANNEL; cdecl; deprecated;
-
 {/* Use libssh2_scp_recv2 for large (> 2GB) file support on windows */}
 function libssh2_scp_recv2(session: PLIBSSH2_SESSION;
                            const path: PAnsiChar;
                            var sb: libssh2_struct_stat): PLIBSSH2_CHANNEL; cdecl; // libssh2_struct_stat *
-
 
 function libssh2_scp_send_ex(session: PLIBSSH2_SESSION;
                              const path: PAnsiChar;
@@ -983,25 +844,19 @@ function libssh2_scp_send_ex(session: PLIBSSH2_SESSION;
                              size: SIZE_T;
                              mtime: LongInt;
                              atime: LongInt): PLIBSSH2_CHANNEL; cdecl  ;
-
 function libssh2_scp_send64(session: PLIBSSH2_SESSION; const path: PAnsiChar; mode: Integer;
                    size: UInt64; mtime: time_t; atime: time_t): PLIBSSH2_CHANNEL; cdecl ;
-
 function libssh2_scp_send(session: PLIBSSH2_SESSION; const path: PAnsiChar; mode: Integer; size: SIZE_T): PLIBSSH2_CHANNEL; inline;
-
 function libssh2_base64_decode(session: PLIBSSH2_SESSION;
                                var dest: PAnsiChar;
                                var dest_len: Uint;
                                const src: PAnsiChar;
                                src_len: Uint): Integer; cdecl; 
-
 function libssh2_version(req_version_num: Integer): PAnsiChar; cdecl  ; 
-
 const
   HAVE_LIBSSH2_KNOWNHOST_API = $010101; {/* since 1.1.1 */}
 const
   HAVE_LIBSSH2_VERSION_API = $010100; {/* libssh2_version since 1.1 */}
-
 type
 PLIBSSH2_KNOWNHOST = ^LIBSSH2_KNOWNHOST;
 LIBSSH2_KNOWNHOST = record
@@ -1011,7 +866,6 @@ LIBSSH2_KNOWNHOST = record
     key: PAnsiChar;  {/* key in base64/printable format */}
     typemask: Integer;
 end;
-
 {/*
  * libssh2_knownhost_init
  *
@@ -1019,7 +873,6 @@ end;
  *
  */}
 function libssh2_knownhost_init(session: PLIBSSH2_SESSION): PLIBSSH2_KNOWNHOSTS; cdecl;
-
 {/*
  * libssh2_knownhost_add
  *
@@ -1039,7 +892,6 @@ function libssh2_knownhost_init(session: PLIBSSH2_SESSION): PLIBSSH2_KNOWNHOSTS;
  * pre-hashed when checking for it in the libssh2_knownhost_check() function.
  *
  */}
-
 {/* host format (2 bits) */}
 const
   LIBSSH2_KNOWNHOST_TYPE_MASK = $ffff;
@@ -1049,12 +901,10 @@ const
   LIBSSH2_KNOWNHOST_TYPE_SHA1 = 2; {/* always base64 encoded */}
 const
   LIBSSH2_KNOWNHOST_TYPE_CUSTOM = 3;
-
 {/* key format (2 bits) */}
 const LIBSSH2_KNOWNHOST_KEYENC_MASK = (3 shl 16);
 const LIBSSH2_KNOWNHOST_KEYENC_RAW = (1 shl 16);
 const LIBSSH2_KNOWNHOST_KEYENC_BASE64 = (2 shl 16);
-
 {/* type of key (3 bits) */}
 const LIBSSH2_KNOWNHOST_KEY_MASK      = (15 shl 18);
 const LIBSSH2_KNOWNHOST_KEY_SHIFT     = 18;
@@ -1066,13 +916,11 @@ const LIBSSH2_KNOWNHOST_KEY_ECDSA_384 = (5 shl 18);
 const LIBSSH2_KNOWNHOST_KEY_ECDSA_521 = (6 shl 18);
 const LIBSSH2_KNOWNHOST_KEY_ED25519   = (7 shl 18);
 const LIBSSH2_KNOWNHOST_KEY_UNKNOWN   = (15 shl 18);
-
 function libssh2_knownhost_add(hosts: PLIBSSH2_KNOWNHOSTS;
                       host,
                       salt,
                       key: PAnsiChar; keylen: size_t; typemask: Integer;
                       var store: PLIBSSH2_KNOWNHOST): Integer; cdecl ;
-
 {/*
  * libssh2_knownhost_addc
  *
@@ -1099,7 +947,6 @@ function libssh2_knownhost_add(hosts: PLIBSSH2_KNOWNHOSTS;
  * The keylen parameter may be omitted (zero) if the key is provided as a
  * NULL-terminated base64-encoded string.
  */}
-
 function libssh2_knownhost_addc(hosts: PLIBSSH2_KNOWNHOSTS;
                        host,
                        salt,
@@ -1108,7 +955,6 @@ function libssh2_knownhost_addc(hosts: PLIBSSH2_KNOWNHOSTS;
                        comment: PAnsiChar;
                        commentlen: size_t; typemask: Integer;
                        var store: PLIBSSH2_KNOWNHOST): Integer; cdecl ;
-
 {/*
  * libssh2_knownhost_check
  *
@@ -1127,7 +973,6 @@ function libssh2_knownhost_addc(hosts: PLIBSSH2_KNOWNHOSTS;
  * LIBSSH2_KNOWNHOST_CHECK_* values, see below
  *
  */}
-
 const
   LIBSSH2_KNOWNHOST_CHECK_MATCH     = 0;
 const
@@ -1136,12 +981,10 @@ const
   LIBSSH2_KNOWNHOST_CHECK_NOTFOUND  = 2;
 const
   LIBSSH2_KNOWNHOST_CHECK_FAILURE   = 3;
-
 function libssh2_knownhost_check(hosts: PLIBSSH2_KNOWNHOSTS;
                         host, key: PAnsiChar; keylen: size_t;
                         typemask: Integer;
                         var knownhost: PLIBSSH2_KNOWNHOST): Integer; cdecl;
-
 {/* this function is identital to the above one, but also takes a port
    argument that allows libssh2 to do a better check */}
 function libssh2_knownhost_checkp(hosts: PLIBSSH2_KNOWNHOSTS;
@@ -1149,7 +992,6 @@ function libssh2_knownhost_checkp(hosts: PLIBSSH2_KNOWNHOSTS;
                          const key: PAnsiChar; keylen: size_t;
                          typemask: Integer;
                          var knownhost: PLIBSSH2_KNOWNHOST): Integer; cdecl ;
-
 {/*
  * libssh2_knownhost_del
  *
@@ -1159,7 +1001,6 @@ function libssh2_knownhost_checkp(hosts: PLIBSSH2_KNOWNHOSTS;
  */}
 function libssh2_knownhost_del(hosts: PLIBSSH2_KNOWNHOSTS;
                                entry: PLIBSSH2_KNOWNHOST): Integer; cdecl;
-
 {/*
  * libssh2_knownhost_free
  *
@@ -1167,7 +1008,6 @@ function libssh2_knownhost_del(hosts: PLIBSSH2_KNOWNHOSTS;
  *
  */}
 procedure libssh2_knownhost_free(hosts: PLIBSSH2_KNOWNHOSTS); cdecl;
-
 {/*
  * libssh2_knownhost_readline()
  *
@@ -1179,7 +1019,6 @@ procedure libssh2_knownhost_free(hosts: PLIBSSH2_KNOWNHOSTS); cdecl;
 function libssh2_knownhost_readline(hosts: PLIBSSH2_KNOWNHOSTS;
                            const line: PAnsiChar; len: size_t; _type: Integer): Integer; cdecl;
 
-
 {/*
  * libssh2_knownhost_readfile
  *
@@ -1190,13 +1029,10 @@ function libssh2_knownhost_readline(hosts: PLIBSSH2_KNOWNHOSTS;
  * This implementation currently only knows one 'type' (openssh), all others
  * are reserved for future use.
  */}
-
 const
   LIBSSH2_KNOWNHOST_FILE_OPENSSH = 1;
-
 function libssh2_knownhost_readfile(hosts: PLIBSSH2_KNOWNHOSTS;
                            const filename: PAnsiChar; _type: Integer): Integer; cdecl;
-
 {/*
  * libssh2_knownhost_writeline()
  *
@@ -1214,7 +1050,6 @@ function libssh2_knownhost_writeline(hosts: PLIBSSH2_KNOWNHOSTS;
                             buffer: PAnsiChar; buflen: size_t;
                             var outlen: size_t; {/* the amount of written data */}
                             _type: Integer): Integer; cdecl;
-
 {/*
  * libssh2_knownhost_writefile
  *
@@ -1223,10 +1058,8 @@ function libssh2_knownhost_writeline(hosts: PLIBSSH2_KNOWNHOSTS;
  * This implementation currently only knows one 'type' (openssh), all others
  * are reserved for future use.
  */}
-
 function libssh2_knownhost_writefile(hosts: PLIBSSH2_KNOWNHOSTS;
                             const filename: PAnsiChar; _type: Integer): Integer; cdecl;
-
 {/*
  * libssh2_knownhost_get()
  *
@@ -1242,10 +1075,8 @@ function libssh2_knownhost_writefile(hosts: PLIBSSH2_KNOWNHOSTS;
 function libssh2_knownhost_get(hosts: PLIBSSH2_KNOWNHOSTS;
                       var store: PLIBSSH2_KNOWNHOST;
                       prev: PLIBSSH2_KNOWNHOST): Integer; cdecl;
-
 const
  HAVE_LIBSSH2_AGENT_API = $010202; {/* since 1.2.2 */}
-
 
 type
  libssh2_agent_publickey = record
@@ -1256,7 +1087,6 @@ type
     comment: PAnsiChar;                 {/* comment in printable format */}
   end;
   PLIBSSH2_AGENT_PUBLICKEY = ^libssh2_agent_publickey;
-
 {/*
  * libssh2_agent_init
  *
@@ -1264,7 +1094,6 @@ type
  *
  */}
 function libssh2_agent_init(session: PLIBSSH2_SESSION): PLIBSSH2_AGENT; cdecl;
-
 {/*
  * libssh2_agent_connect()
  *
@@ -1273,7 +1102,6 @@ function libssh2_agent_init(session: PLIBSSH2_SESSION): PLIBSSH2_AGENT; cdecl;
  * Returns 0 if succeeded, or a negative value for error.
  */}
 function libssh2_agent_connect(agent: PLIBSSH2_AGENT): Integer; cdecl;
-
 {/*
  * libssh2_agent_list_identities()
  *
@@ -1282,7 +1110,6 @@ function libssh2_agent_connect(agent: PLIBSSH2_AGENT): Integer; cdecl;
  * Returns 0 if succeeded, or a negative value for error.
  */}
 function libssh2_agent_list_identities(agent: PLIBSSH2_AGENT): Integer; cdecl;
-
 {/*
  * libssh2_agent_get_identity()
  *
@@ -1298,7 +1125,6 @@ function libssh2_agent_list_identities(agent: PLIBSSH2_AGENT): Integer; cdecl;
 function libssh2_agent_get_identity(agent: PLIBSSH2_AGENT;
 			    var store: PLIBSSH2_AGENT_PUBLICKEY;
 			    prev: PLIBSSH2_AGENT_PUBLICKEY): Integer; cdecl;
-
 {/*
  * libssh2_agent_userauth()
  *
@@ -1309,7 +1135,6 @@ function libssh2_agent_get_identity(agent: PLIBSSH2_AGENT;
 function libssh2_agent_userauth(agent: PLIBSSH2_AGENT;
 		       const username: PAnsiChar;
            identity: PLIBSSH2_AGENT_PUBLICKEY): Integer; cdecl;
-
 {/*
  * libssh2_agent_disconnect()
  *
@@ -1318,7 +1143,6 @@ function libssh2_agent_userauth(agent: PLIBSSH2_AGENT;
  * Returns 0 if succeeded, or a negative value for error.
  */}
 function libssh2_agent_disconnect(agent: PLIBSSH2_AGENT): Integer; cdecl;
-
 {/*
  * libssh2_agent_free()
  *
@@ -1326,7 +1150,6 @@ function libssh2_agent_disconnect(agent: PLIBSSH2_AGENT): Integer; cdecl;
  * collection of public keys.
  */}
 procedure libssh2_agent_free(agent: PLIBSSH2_AGENT); cdecl;
-
 
 {/*
  * libssh2_keepalive_config()
@@ -1344,7 +1167,6 @@ procedure libssh2_agent_free(agent: PLIBSSH2_AGENT); cdecl;
 procedure libssh2_keepalive_config(session: PLIBSSH2_SESSION;
                                            want_reply: Integer;
                                            interval: Cardinal); cdecl;
-
 {/*
  * libssh2_keepalive_send()
  *
@@ -1356,12 +1178,10 @@ procedure libssh2_keepalive_config(session: PLIBSSH2_SESSION;
 function libssh2_keepalive_send(session: PLIBSSH2_SESSION;
                                 var seconds_to_next: Integer): Integer; cdecl;
                       
-
 {+// NOTE NOTE NOTE }
 {-libssh2_trace() has no function in builds that aren't built with debug }
 {-enabled }
 {= }
-
 function libssh2_trace(session: PLIBSSH2_SESSION;
                        bitmask: Integer): Integer; cdecl;
 const
@@ -1382,18 +1202,14 @@ const
   LIBSSH2_TRACE_PUBLICKEY = (1 shl 8);
 const
   LIBSSH2_TRACE_SOCKET = (1 shl 9);
-
 type
   LIBSSH2_TRACE_HANDLER_FUNC = procedure(session: PLIBSSH2_SESSION; P: Pointer;
     const C: PAnsiChar; S: size_t); cdecl;
-
 function libssh2_trace_sethandler(session: PLIBSSH2_SESSION;
                                          context: Pointer;
                                          callback: LIBSSH2_TRACE_HANDLER_FUNC): Integer; cdecl ;
 
-
 implementation
-
 function libssh2_init; external libssh2_name;
 procedure libssh2_exit; external libssh2_name;
 procedure libssh2_free; external libssh2_name;
@@ -1485,17 +1301,14 @@ procedure libssh2_keepalive_config; external libssh2_name;
 function libssh2_keepalive_send; external libssh2_name;
 //function libssh2_trace; external libssh2_name;
 function libssh2_trace_sethandler; external libssh2_name;
-
 function libssh2_session_init: PLIBSSH2_SESSION;
 begin
   Result := libssh2_session_init_ex(nil, nil, nil, nil);
 end;
-
 function libssh2_session_disconnect(session: PLIBSSH2_SESSION; const description: PAnsiChar): Integer;
 begin
   Result := libssh2_session_disconnect_ex(session, SSH_DISCONNECT_BY_APPLICATION, description, '');
 end;
-
 function libssh2_userauth_password(session: PLIBSSH2_SESSION; const username: PAnsiChar; const password: PAnsiChar): Integer;
 var
  P: LIBSSH2_PASSWD_CHANGEREQ_FUNC;
@@ -1503,34 +1316,28 @@ begin
  P := nil;
  Result := libssh2_userauth_password_ex(session, username, Length(username), password, Length(password), P)
 end;
-
 function libssh2_userauth_publickey_fromfile(session: PLIBSSH2_SESSION; const username: PAnsiChar;
     const publickey: PAnsiChar; const privatekey: PAnsiChar; const passphrase: PAnsiChar): Integer;
 begin
   Result := libssh2_userauth_publickey_fromfile_ex(session, username, Length(username), publickey, privatekey, passphrase);
 end;
-
 function libssh2_userauth_hostbased_fromfile(session: PLIBSSH2_SESSION; const username: PAnsiChar; const publickey: PAnsiChar;
     const privatekey: PAnsiChar; const passphrase: PAnsiChar; const hostname: PAnsiChar): Integer;
 begin
   Result := libssh2_userauth_hostbased_fromfile_ex(session, username, Length(username), publickey, privatekey, passphrase, hostname, Length(hostname), username, Length(username));  
 end;
-
 function libssh2_userauth_keyboard_interactive(session: PLIBSSH2_SESSION; const username: PAnsiChar;  response_callback: LIBSSH2_USERAUTH_KBDINT_RESPONSE_FUNC): Integer;
 begin
   Result := libssh2_userauth_keyboard_interactive_ex(session, username, Length(username), response_callback);
 end;
-
 function libssh2_channel_open_session(session: PLIBSSH2_SESSION): PLIBSSH2_CHANNEL;
 begin
   Result := libssh2_channel_open_ex(session, 'session', Length('session'), LIBSSH2_CHANNEL_WINDOW_DEFAULT, LIBSSH2_CHANNEL_PACKET_DEFAULT, nil, 0);
 end;
-
 function libssh2_channel_direct_tcpip(session: PLIBSSH2_SESSION; const host: PAnsiChar; port: Integer): PLIBSSH2_CHANNEL;
 begin
   Result := libssh2_channel_direct_tcpip_ex(session, host, port, '127.0.0.1', 22);
 end;
-
 function libssh2_channel_forward_listen(session: PLIBSSH2_SESSION; port: Integer): PLIBSSH2_LISTENER;
 var
  I: Integer;
@@ -1538,52 +1345,42 @@ begin
   I := 0;
   Result := libssh2_channel_forward_listen_ex(session, nil, port, I, 16);
 end;
-
 function libssh2_channel_setenv(channel: PLIBSSH2_CHANNEL; const varname: PAnsiChar; const value: PAnsiChar): Integer;
 begin
   Result := libssh2_channel_setenv_ex(channel, varname, Length(varname), value, Length(value));
 end;
-
 function libssh2_channel_request_pty(channel: PLIBSSH2_CHANNEL; const term: PAnsiChar): Integer;
 begin
   Result := libssh2_channel_request_pty_ex(channel, term, Length(term), nil, 0, LIBSSH2_TERM_WIDTH, LIBSSH2_TERM_HEIGHT, LIBSSH2_TERM_WIDTH_PX, LIBSSH2_TERM_HEIGHT_PX);
 end;
-
 function libssh2_channel_request_pty_size(channel: PLIBSSH2_CHANNEL; width: Integer; height: Integer): Integer;
 begin
   Result := libssh2_channel_request_pty_size_ex(channel, width, height, 0, 0);
 end;
-
 function libssh2_channel_x11_req(channel: PLIBSSH2_CHANNEL; screen_number: Integer): Integer;
 begin
   Result := libssh2_channel_x11_req_ex(channel, 0, nil, nil, screen_number);
 end;
-
 function libssh2_channel_shell(channel: PLIBSSH2_CHANNEL): Integer;
 begin
   Result := libssh2_channel_process_startup(channel, 'shell', Length('shell'), nil, 0);
 end;
-
 function libssh2_channel_exec(channel: PLIBSSH2_CHANNEL; const command: PAnsiChar): Integer;
 begin
   Result := libssh2_channel_process_startup(channel, 'exec', Length('exec'), command, Length(command));
 end;
-
 function libssh2_channel_subsystem(channel: PLIBSSH2_CHANNEL; const subsystem: PAnsiChar): Integer;
 begin
   Result := libssh2_channel_process_startup(channel, 'subsystem', Length('subsystem'), subsystem, Length(subsystem));
 end;
-
 function libssh2_channel_read(channel: PLIBSSH2_CHANNEL; buf: PAnsiChar; buflen: SIZE_T): Integer;
 begin
   Result := libssh2_channel_read_ex(channel, 0, buf, buflen);
 end;
-
 function libssh2_channel_read_stderr(channel: PLIBSSH2_CHANNEL; buf: PAnsiChar; buflen: SIZE_T): Integer;
 begin
   Result := libssh2_channel_read_ex(channel, SSH_EXTENDED_DATA_STDERR, buf, buflen);
 end;
-
 function libssh2_channel_window_read(channel: PLIBSSH2_CHANNEL): ULong;
 var
   I: Integer;
@@ -1591,25 +1388,21 @@ begin
   I := 0;
   Result := libssh2_channel_window_read_ex(channel, I, I);
 end;
-
 function libssh2_channel_write(channel: PLIBSSH2_CHANNEL; const buf: PAnsiChar; buflen: ULong): Integer;
 begin
   Result := libssh2_channel_write_ex(channel, 0, buf, buflen);
 end;
-
 function libssh2_channel_write_stderr(channel: PLIBSSH2_CHANNEL; const buf: PAnsiChar; buflen: ULong): Integer;
 begin
   Result := libssh2_channel_write_ex(channel, SSH_EXTENDED_DATA_STDERR, buf, buflen);
 end;
-
 function libssh2_channel_window_write(channel: PLIBSSH2_CHANNEL): ULong;
 var
- I: Integer;
+  I: Integer;
 begin
   I := 0;
   Result := libssh2_channel_window_write_ex(channel, I);
 end;
-
 procedure libssh2_channel_ignore_extended_data(channel: PLIBSSH2_CHANNEL; ignore: Integer);
 var
  I: Integer;
@@ -1620,20 +1413,16 @@ begin
     I := LIBSSH2_CHANNEL_EXTENDED_DATA_NORMAL;
   libssh2_channel_handle_extended_data(channel, I);
 end;
-
 function libssh2_channel_flush(channel: PLIBSSH2_CHANNEL): Integer;
 begin
   Result := libssh2_channel_flush_ex(channel, 0);
 end;
-
 function libssh2_channel_flush_stderr(channel: PLIBSSH2_CHANNEL): Integer;
 begin
   Result := libssh2_channel_flush_ex(channel, SSH_EXTENDED_DATA_STDERR);
 end;
-
 function libssh2_scp_send(session: PLIBSSH2_SESSION; const path: PAnsiChar; mode: Integer; size: SIZE_T): PLIBSSH2_CHANNEL; inline;
 begin
   Result := libssh2_scp_send_ex(session, path, mode, size, 0, 0);
 end;
-
 end.

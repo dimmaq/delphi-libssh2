@@ -108,9 +108,7 @@ function GetLibSsh2Ver: AnsiString;
 implementation
 
 uses
-  Windows,
-  //
-  uApp;
+  Windows;
 
 function HostKeyTypeToStr(const AType: Integer): string;
 begin
@@ -142,9 +140,11 @@ begin
   Result := gLibVer
 end;
 
+
 function sshAllocMem(count: UINT; _abstract: PPointer): Pointer; cdecl;
 begin
-  Result := GetMemory(count);
+//  Result := GetMemory(count); FreeMemory
+  Result := AllocMem(count);  // FreeMem
 end;
 
 procedure sshFreeMem(ptr: Pointer; _abstract: PPointer); cdecl;
@@ -157,6 +157,7 @@ begin
   Result := ReallocMemory(ptr, count);
 end;
 
+
 { TBaseLibSsh2 }
 
 constructor TBaseLibSsh2.Create(const ABanner: AnsiString);
@@ -164,7 +165,7 @@ var
   ret: Integer;
 begin
   inherited Create;
-  // FSession := libssh2_session_init();
+//  FSession := libssh2_session_init();
   FSession := libssh2_session_init_ex(sshAllocMem, sshFreeMem, sshReallocMem, Self);
   if FSession = nil then
     RaiseSshError('libssh2_session_init ');
@@ -178,11 +179,15 @@ begin
 end;
 
 destructor TBaseLibSsh2.Destroy;
+var
+  ret: Integer;
 begin
   if FSession <> nil then
   begin
-    libssh2_session_disconnect(FSession, '');
-    libssh2_session_free(FSession);
+//    libssh2_session_disconnect(FSession, '');
+    ret := libssh2_session_free(FSession);
+    if ret <> 0 then
+      RaiseSshError('libssh2_session_free ');
   end;
   inherited;
 end;
@@ -585,7 +590,7 @@ end;
 
 function TBaseLibSsh2.Auth(const AUsername, APassword: string; ATerminatedEvent: TEvent): Boolean;
 begin
-  Result := Auth(AnsiString(AUsername), AnsiString(APassword), ATerminatedEvent)
+  Result := Auth(Utf8Encode(AUsername), Utf8Encode(APassword), ATerminatedEvent)
 end;
 
 function TBaseLibSsh2.AuthPasswordSupport(const AUser: string): Boolean;
@@ -655,11 +660,9 @@ begin
 end;
 
 initialization
-
-LibSshInit_();
+  LibSshInit_();
 
 finalization
-
-libssh2_exit();
+  libssh2_exit();
 
 end.
